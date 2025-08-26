@@ -3,46 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskMaster | Your Productivity Companion</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Taskatk | Your Ultimate Productivity Hub</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="particles" id="particles"></div>
+    
     <div class="container">
         <header>
             <div class="header-content">
-                <h1>TaskMaster</h1>
-                <button id="theme-toggle" aria-label="Toggle dark mode">
-                    <i class="fas fa-moon"></i>
-                </button>
+                <h1>Taskatk</h1>
+                <div class="controls">
+                    <button id="theme-toggle" title="Toggle theme">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button id="clear-all-btn" title="Clear all tasks">
+                        <i class="fas fa-trash-can"></i>
+                    </button>
+                </div>
             </div>
+            
+            <div class="stats-container">
+                <div class="stat-card">
+                    <span class="stat-number" id="total-tasks">0</span>
+                    <div class="stat-label">Total Tasks</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="completed-tasks">0</span>
+                    <div class="stat-label">Completed</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="remaining-tasks">0</span>
+                    <div class="stat-label">Remaining</div>
+                </div>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+            
             <div class="input-container">
-                <input type="text" id="task-input" placeholder="What needs to be done?" aria-label="Add new task">
-                <button id="add-task-btn" aria-label="Add task">
+                <input type="text" id="task-input" placeholder="What needs to be done?" maxlength="200">
+                <button id="add-task-btn">
                     <i class="fas fa-plus"></i>
                 </button>
             </div>
         </header>
-
+        
         <main>
             <div class="filter-buttons">
                 <button class="filter-btn active" data-filter="all">All</button>
                 <button class="filter-btn" data-filter="active">Active</button>
                 <button class="filter-btn" data-filter="completed">Completed</button>
+                <button class="filter-btn" data-filter="high">High Priority</button>
             </div>
-
-            <ul id="task-list">
-              
-            </ul>
+            
+            <ul id="task-list"></ul>
         </main>
-
+        
         <footer>
-            <p>"Plan your day, own your life."</p>
-            <p class="task-counter">0 tasks remaining</p>
+            <p>"Plan your day, attack your goals."</p>
         </footer>
     </div>
 
-    <script src="java.js"></script>
+    <!-- Priority Selection Modal -->
+    <div class="priority-modal" id="priority-modal">
+        <div class="priority-modal-content">
+            <h3>Set Task Priority</h3>
+            <div class="priority-options">
+                <button class="priority-option high" data-priority="high">High</button>
+                <button class="priority-option medium" data-priority="medium">Medium</button>
+                <button class="priority-option low" data-priority="low">Low</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="scrip.js"></script>
 </body>
 </html>
