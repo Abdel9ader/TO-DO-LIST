@@ -1,4 +1,4 @@
-        document.addEventListener('DOMContentLoaded', function() {
+ document.addEventListener('DOMContentLoaded', function() {
             // DOM Elements
             const taskInput = document.getElementById('task-input');
             const addTaskBtn = document.getElementById('add-task-btn');
@@ -16,14 +16,15 @@
             const progressFill = document.getElementById('progress-fill');
             
             // State
-            let tasks = [];
-            let currentFilter = 'all';
+            let tasks = JSON.parse(localStorage.getItem('taskatk-tasks')) || [];
+            let currentFilter = localStorage.getItem('taskatk-filter') || 'all';
             let pendingTaskText = '';
-            let taskIdCounter = 1; // Add counter for unique IDs
+            let taskIdCounter = parseInt(localStorage.getItem('taskatk-counter')) || 1;
             
             // Initialize app
             initTheme();
             createParticles();
+            loadInitialFilter(); // Load saved filter
             renderTasks();
             updateStats();
             
@@ -41,6 +42,7 @@
                     filterButtons.forEach(btn => btn.classList.remove('active'));
                     button.classList.add('active');
                     currentFilter = button.dataset.filter;
+                    localStorage.setItem('taskatk-filter', currentFilter);
                     renderTasks();
                 });
             });
@@ -78,7 +80,7 @@
                 if (!text) return;
                 
                 const newTask = {
-                    id: taskIdCounter++, // Use counter instead of timestamp
+                    id: taskIdCounter++,
                     text,
                     completed: false,
                     priority,
@@ -86,6 +88,7 @@
                 };
                 
                 tasks.unshift(newTask);
+                saveTasks();
                 renderTasks();
                 updateStats();
                 
@@ -189,6 +192,7 @@
                     taskElement.classList.toggle('completed', task.completed);
                 }
                 
+                saveTasks();
                 updateStats();
                 
                 if (task.completed) {
@@ -203,9 +207,10 @@
                     taskElement.classList.add('fade-out');
                     setTimeout(() => {
                         tasks = tasks.filter(task => task.id !== id);
+                        saveTasks();
                         renderTasks();
                         updateStats();
-                    }, 400);
+                    }, 500);
                 }
             }
             
@@ -237,6 +242,7 @@
                     if (newText && newText !== originalText) {
                         task.text = newText;
                         taskTextElement.textContent = newText;
+                        saveTasks();
                     }
                     input.replaceWith(taskTextElement);
                     updateStats();
@@ -277,6 +283,7 @@
                     priorityElement.textContent = task.priority;
                 }
                 
+                saveTasks();
                 updateStats();
                 showCelebration('🏆');
             }
@@ -295,10 +302,11 @@
                     
                     setTimeout(() => {
                         tasks = [];
+                        saveTasks();
                         renderTasks();
                         updateStats();
                         showCelebration('🗑️');
-                    }, taskElements.length * 100 + 400);
+                    }, taskElements.length * 100 + 500);
                 }
             }
             
@@ -343,7 +351,7 @@
             }
             
             function initTheme() {
-                const savedTheme = getStoredTheme();
+                const savedTheme = localStorage.getItem('taskatk-theme') || 'light';
                 applyTheme(savedTheme);
                 updateThemeIcon(savedTheme);
             }
@@ -354,7 +362,7 @@
                 
                 applyTheme(newTheme);
                 updateThemeIcon(newTheme);
-                storeTheme(newTheme);
+                localStorage.setItem('taskatk-theme', newTheme);
                 
                 // Recreate particles for theme change
                 setTimeout(createParticles, 300);
@@ -386,18 +394,80 @@
                 }
             }
             
-            // Storage functions (in-memory for this demo)
-            function getStoredTheme() {
-                // In a real app, this would use localStorage
-                return 'light';
+            // Storage functions
+            function saveTasks() {
+                try {
+                    localStorage.setItem('taskatk-tasks', JSON.stringify(tasks));
+                    localStorage.setItem('taskatk-counter', taskIdCounter.toString());
+                    
+                    // Auto-save indicator (optional visual feedback)
+                    showAutoSaveIndicator();
+                } catch (error) {
+                    console.error('Failed to save tasks to localStorage:', error);
+                    showError('Failed to save tasks. Storage might be full.');
+                }
             }
             
-            function storeTheme(theme) {
-                // In a real app, this would store in localStorage
-                console.log('Theme stored:', theme);
+            function showAutoSaveIndicator() {
+                // Create a subtle save indicator
+                const indicator = document.createElement('div');
+                indicator.textContent = '✓ Saved';
+                indicator.style.cssText = `
+                    position: fixed; top: 20px; right: 20px; z-index: 1000;
+                    background: var(--success-color); color: white; padding: 8px 16px;
+                    border-radius: 20px; font-size: 0.9rem; font-weight: 600;
+                    opacity: 0; transition: opacity 0.3s ease; pointer-events: none;
+                `;
+                
+                document.body.appendChild(indicator);
+                
+                // Fade in
+                requestAnimationFrame(() => {
+                    indicator.style.opacity = '1';
+                });
+                
+                // Fade out and remove
+                setTimeout(() => {
+                    indicator.style.opacity = '0';
+                    setTimeout(() => {
+                        if (document.body.contains(indicator)) {
+                            document.body.removeChild(indicator);
+                        }
+                    }, 300);
+                }, 1000);
             }
             
-            // Keyboard shortcuts
+            function showError(message) {
+                const error = document.createElement('div');
+                error.textContent = message;
+                error.style.cssText = `
+                    position: fixed; top: 20px; right: 20px; z-index: 1000;
+                    background: var(--danger-color); color: white; padding: 12px 20px;
+                    border-radius: 8px; font-size: 1rem; font-weight: 600;
+                    box-shadow: var(--shadow); max-width: 300px;
+                `;
+                
+                document.body.appendChild(error);
+                
+                setTimeout(() => {
+                    if (document.body.contains(error)) {
+                        document.body.removeChild(error);
+                    }
+                }, 5000);
+            }
+            
+            function loadInitialFilter() {
+                // Set the initial filter state
+                const savedFilter = localStorage.getItem('taskatk-filter') || 'all';
+                const filterBtn = document.querySelector(`[data-filter="${savedFilter}"]`);
+                if (filterBtn) {
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    filterBtn.classList.add('active');
+                    currentFilter = savedFilter;
+                }
+            }
+            
+            // Keyboard shortcuts with localStorage support
             document.addEventListener('keydown', function(e) {
                 // Ctrl/Cmd + Enter to add task quickly
                 if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -426,19 +496,43 @@
                     if (completedTasks.length > 0) {
                         if (confirm(`Clear ${completedTasks.length} completed tasks?`)) {
                             tasks = tasks.filter(t => !t.completed);
+                            saveTasks();
                             renderTasks();
                             updateStats();
                         }
                     }
                 }
+                
+                // Ctrl/Cmd + S to manually save (shows save indicator)
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    saveTasks();
+                }
             });
             
-            // Auto-save functionality (simulated)
+            // Auto-save functionality with real persistence
             setInterval(() => {
                 if (tasks.length > 0) {
-                    console.log('Tasks auto-saved:', tasks.length, 'tasks');
+                    // Silent save - no indicator for periodic saves
+                    try {
+                        localStorage.setItem('taskatk-tasks', JSON.stringify(tasks));
+                        localStorage.setItem('taskatk-counter', taskIdCounter.toString());
+                    } catch (error) {
+                        console.error('Auto-save failed:', error);
+                    }
                 }
-            }, 30000); // Save every 30 seconds
+            }, 30000); // Auto-save every 30 seconds
+            
+            // Save on page unload
+            window.addEventListener('beforeunload', () => {
+                try {
+                    localStorage.setItem('taskatk-tasks', JSON.stringify(tasks));
+                    localStorage.setItem('taskatk-counter', taskIdCounter.toString());
+                    localStorage.setItem('taskatk-filter', currentFilter);
+                } catch (error) {
+                    console.error('Failed to save on unload:', error);
+                }
+            });
             
             // Add some sample tasks for demo - REMOVED FOR DYNAMIC VERSION
             // Application starts completely empty for full dynamic experience
